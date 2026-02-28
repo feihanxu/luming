@@ -1,0 +1,122 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --bg: #FFFFFF;
+  --bg-secondary: #F5F5F5;
+  --card: #FFFFFF;
+  --text: #000000;
+  --text-secondary: #8E8E93;
+  --text-tertiary: #C7C7CC;
+  --separator: #E5E5EA;
+  --accent: #007AFF;
+  --accent-light: #E8F4FF;
+  --green: #34C759;
+  --orange: #FF9500;
+  --red: #FF3B30;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  background-color: var(--bg-secondary);
+  color: var(--text);
+  line-height: 1.4;
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.phone-frame {
+  max-width: 430px;
+  width: 100%;
+  min-height: 100vh;
+  background: var(--bg-secondary);
+  position: relative;
+  padding-bottom: 60px;
+}
+
+.page-header {
+  background: var(--bg);
+  padding: 14px 16px;
+  border-bottom: 0.5px solid var(--separator);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.header-action {
+  font-size: 26px;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.search-bar {
+  background: var(--bg);
+  padding: 8px 16px 12px;
+}
+
+.search-input {
+  width: 100%;
+  background: var(--bg-secondary);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 16px;
+  outline: none;
+  color: var(--text);
+}
+
+.search-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.section-label {
+  padding: 12px 16px 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn:active {
+  opacity: 0.7;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text);
+}
+
+.btn-danger {
+  background: var(--red);
+  color: white;
+}
