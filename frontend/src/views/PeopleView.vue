@@ -11,7 +11,7 @@
     </div>
 
     <div class="search-bar">
-      <input type="text" class="search-input" placeholder="搜索" v-model="searchQuery">
+      <input type="text" class="search-input" placeholder="搜索人脉..." v-model="searchQuery">
     </div>
 
     <div v-if="recentPersons.length > 0">
@@ -35,11 +35,21 @@
     </div>
 
     <div v-if="filteredPersons.length === 0" class="empty-state">
-      暂无人脉记录
+      <div class="empty-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <div class="empty-text">暂无人脉记录</div>
+      <div class="empty-hint">点击右上角 + 添加人脉</div>
     </div>
 
     <div v-if="showAddModal" class="modal-overlay" @click="showAddModal = false">
       <div class="modal-sheet" @click.stop>
+        <div class="modal-handle"></div>
         <div class="modal-header">
           <span class="modal-title">新增人脉</span>
           <button class="modal-close" @click="showAddModal = false">取消</button>
@@ -161,12 +171,30 @@ onMounted(() => {
 
 <style scoped>
 .people-page {
-  background: var(--bg-secondary);
+  background: var(--bg);
+  min-height: 100vh;
 }
 
 .empty-state {
-  padding: 40px;
+  padding: 60px 40px;
   text-align: center;
+}
+
+.empty-icon {
+  color: var(--text-tertiary);
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.empty-text {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.empty-hint {
+  font-size: 14px;
   color: var(--text-tertiary);
 }
 
@@ -176,7 +204,8 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
   z-index: 2000;
   display: flex;
   align-items: flex-end;
@@ -186,39 +215,57 @@ onMounted(() => {
 .modal-sheet {
   width: 100%;
   max-width: 430px;
-  background: var(--bg);
-  border-radius: 12px 12px 0 0;
-  max-height: 80vh;
+  background: var(--card);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  max-height: 85vh;
   overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.modal-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--separator);
+  border-radius: 2px;
+  margin: 12px auto;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  border-bottom: 0.5px solid var(--separator);
+  padding: 8px 20px 16px;
 }
 
 .modal-title {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
 }
 
 .modal-close {
-  font-size: 17px;
+  font-size: 16px;
   color: var(--accent);
   background: none;
   border: none;
   cursor: pointer;
+  font-weight: 500;
 }
 
 .modal-body {
-  padding: 16px;
+  padding: 0 20px 30px;
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .form-label {
@@ -226,18 +273,19 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-secondary);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .form-input {
   width: 100%;
-  padding: 12px;
+  padding: 14px 16px;
   background: var(--bg-secondary);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 16px;
   color: var(--text);
   outline: none;
+  transition: box-shadow 0.2s ease;
 }
 
 .form-input::placeholder {
@@ -245,11 +293,11 @@ onMounted(() => {
 }
 
 .form-input:focus {
-  background: var(--bg-secondary);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-full {
   width: 100%;
-  margin-top: 8px;
+  margin-top: 12px;
 }
 </style>

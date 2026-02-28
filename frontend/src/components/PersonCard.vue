@@ -1,5 +1,5 @@
 <template>
-  <div class="person-card" @click="$emit('click')">
+  <div class="person-card fade-in" @click="$emit('click')">
     <div class="person-avatar" :style="avatarStyle">
       {{ person.name.charAt(0) }}
     </div>
@@ -25,11 +25,20 @@ const props = defineProps({
 
 defineEmits(['click'])
 
+const avatarColors = [
+  'linear-gradient(135deg, #7C9A92 0%, #9DB5AD 100%)',
+  'linear-gradient(135deg, #A390C4 0%, #C4B5D9 100%)',
+  'linear-gradient(135deg, #7BA3C9 0%, #9DBED9 100%)',
+  'linear-gradient(135deg, #D4A574 0%, #E5C4A4 100%)',
+  'linear-gradient(135deg, #C9707D 0%, #D999A3 100%)'
+]
+
 const avatarStyle = computed(() => {
   if (props.person.avatar) {
     return { backgroundImage: `url(${props.person.avatar})`, backgroundSize: 'cover' }
   }
-  return {}
+  const colorIndex = props.person.name.charCodeAt(0) % avatarColors.length
+  return { background: avatarColors[colorIndex] }
 })
 
 const lastContactText = computed(() => {
@@ -54,31 +63,33 @@ const isStale = computed(() => {
 
 <style scoped>
 .person-card {
-  background: var(--bg);
-  padding: 14px 16px;
+  background: var(--card);
+  padding: 16px 20px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 1px;
+  gap: 16px;
+  margin: 0 16px 12px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background 0.1s ease;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .person-card:active {
-  background: var(--bg-secondary);
+  transform: scale(0.98);
+  box-shadow: var(--shadow-md);
 }
 
 .person-avatar {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: #E0E0E0;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-weight: 600;
+  color: white;
   flex-shrink: 0;
 }
 
@@ -89,25 +100,30 @@ const isStale = computed(() => {
 
 .person-name {
   font-size: 17px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .person-meta {
   font-size: 14px;
   color: var(--text-secondary);
-  margin-top: 2px;
+  margin-top: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .person-badge {
-  font-size: 14px;
-  color: var(--text-secondary);
+  font-size: 13px;
+  color: var(--text-tertiary);
   flex-shrink: 0;
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border-radius: 20px;
 }
 
 .person-badge.warning {
   color: var(--orange);
+  background: rgba(212, 165, 116, 0.15);
 }
 </style>

@@ -8,7 +8,7 @@
       <div 
         v-for="(message, index) in messages" 
         :key="index"
-        class="chat-bubble"
+        class="chat-bubble fade-in"
         :class="message.role"
       >
         <template v-if="message.type === 'text'">
@@ -56,7 +56,7 @@
         </div>
       </div>
 
-      <div v-if="isLoading" class="chat-bubble ai">
+      <div v-if="isLoading" class="chat-bubble ai breathing">
         <span class="typing-indicator">正在思考...</span>
       </div>
     </div>
@@ -86,13 +86,18 @@
         v-model="inputText"
         @keypress.enter="sendMessage"
       />
-      <button class="chat-send" @click="sendMessage">→</button>
+      <button class="chat-send" @click="sendMessage">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
     </div>
 
     <div v-if="showAttachMenu" class="attach-menu">
       <div class="attach-menu-item" @click="selectFile('image')">
         <div class="attach-icon photo">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
             <circle cx="8.5" cy="8.5" r="1.5"></circle>
             <polyline points="21 15 16 10 5 21"></polyline>
@@ -102,7 +107,7 @@
       </div>
       <div class="attach-menu-item" @click="selectFile('audio')">
         <div class="attach-icon audio">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
             <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
             <line x1="12" y1="19" x2="12" y2="23"></line>
@@ -211,37 +216,40 @@ onMounted(() => {
   flex-direction: column;
   height: calc(100vh - 104px);
   position: relative;
-  padding-bottom: 60px;
+  padding-bottom: 80px;
+  background: var(--bg);
 }
 
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
-  padding-bottom: 80px;
+  padding: 20px;
+  padding-bottom: 100px;
 }
 
 .chat-bubble {
   max-width: 80%;
-  padding: 12px 16px;
-  border-radius: 18px;
-  margin-bottom: 8px;
+  padding: 14px 18px;
+  border-radius: 20px;
+  margin-bottom: 12px;
   font-size: 16px;
-  line-height: 1.4;
+  line-height: 1.5;
   word-wrap: break-word;
 }
 
 .chat-bubble.user {
-  background: var(--accent);
+  background: var(--accent-gradient);
   color: white;
   margin-left: auto;
-  border-bottom-right-radius: 4px;
+  border-bottom-right-radius: 6px;
+  box-shadow: var(--shadow-sm);
 }
 
 .chat-bubble.ai {
-  background: var(--bg);
+  background: var(--card);
   color: var(--text);
-  border-bottom-left-radius: 4px;
+  border-bottom-left-radius: 6px;
+  box-shadow: var(--shadow-sm);
 }
 
 .typing-indicator {
@@ -249,9 +257,9 @@ onMounted(() => {
 }
 
 .chat-image-container {
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .chat-image-container img {
@@ -263,46 +271,49 @@ onMounted(() => {
 .chat-image-caption {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.85);
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .chat-record-card {
   max-width: 85%;
   background: var(--bg);
-  border-radius: 12px;
-  margin-top: 8px;
+  border-radius: 14px;
+  margin-top: 10px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-sm);
 }
 
 .chat-record-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 14px;
-  border-bottom: 0.5px solid var(--separator);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--separator);
 }
 
 .chat-record-person {
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text);
 }
 
 .chat-record-time {
   font-size: 13px;
   color: var(--text-tertiary);
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border-radius: 20px;
 }
 
 .chat-record-content {
-  padding: 12px 14px;
+  padding: 14px 16px;
 }
 
 .chat-record-row {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 6px;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .chat-record-row:last-child {
@@ -313,39 +324,41 @@ onMounted(() => {
   font-size: 13px;
   color: var(--text-tertiary);
   min-width: 40px;
+  font-weight: 500;
 }
 
 .chat-record-value {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text);
 }
 
 .chat-record-value.todo {
   color: var(--accent);
+  font-weight: 500;
 }
 
 .chat-avatar-preview {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   max-width: 85%;
   background: var(--bg);
-  border-radius: 12px;
-  padding: 12px 14px;
-  margin-top: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-top: 10px;
+  box-shadow: var(--shadow-sm);
 }
 
 .chat-avatar-new {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--accent-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 600;
   color: white;
   position: relative;
 }
@@ -354,8 +367,8 @@ onMounted(() => {
   position: absolute;
   bottom: -2px;
   right: -2px;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   background: var(--green);
   border-radius: 50%;
   display: flex;
@@ -372,68 +385,76 @@ onMounted(() => {
 
 .chat-avatar-name {
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text);
 }
 
 .chat-avatar-desc {
   font-size: 13px;
   color: var(--text-secondary);
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .suggestions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 16px;
-  padding-bottom: 70px;
+  gap: 10px;
+  padding: 16px 20px;
+  padding-bottom: 80px;
 }
 
 .suggestion-btn {
-  padding: 10px 16px;
-  background: var(--bg);
-  border: 1px solid var(--separator);
-  border-radius: 18px;
+  padding: 12px 18px;
+  background: var(--card);
+  border: none;
+  border-radius: 20px;
   font-size: 15px;
   color: var(--text);
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
 }
 
 .suggestion-btn:active {
-  background: var(--bg-secondary);
+  transform: scale(0.98);
+  box-shadow: var(--shadow-md);
 }
 
 .chat-input-area {
   position: fixed;
-  bottom: 68px;
+  bottom: 80px;
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
   max-width: 430px;
-  background: var(--bg);
-  padding: 10px 16px;
-  border-top: 0.5px solid var(--separator);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 12px 20px;
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
   z-index: 100;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.04);
 }
 
 .chat-attach-btn {
-  width: 36px;
-  height: 36px;
-  background: transparent;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-secondary);
   border: none;
+  border-radius: 50%;
   color: var(--text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
+  transition: all 0.2s ease;
 }
 
 .chat-attach-btn:active {
+  background: var(--accent-light);
   color: var(--accent);
 }
 
@@ -441,11 +462,11 @@ onMounted(() => {
   flex: 1;
   background: var(--bg-secondary);
   border: none;
-  border-radius: 20px;
-  padding: 10px 16px;
+  border-radius: 24px;
+  padding: 12px 18px;
   font-size: 16px;
   outline: none;
-  min-height: 40px;
+  min-height: 44px;
   line-height: 20px;
 }
 
@@ -454,44 +475,49 @@ onMounted(() => {
 }
 
 .chat-send {
-  width: 36px;
-  height: 36px;
-  background: var(--accent);
+  width: 44px;
+  height: 44px;
+  background: var(--accent-gradient);
   border: none;
   border-radius: 50%;
   color: white;
-  font-size: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.chat-send:active {
+  transform: scale(0.95);
 }
 
 .attach-menu {
   position: fixed;
-  bottom: 128px;
+  bottom: 140px;
   left: 50%;
   transform: translateX(-50%);
   max-width: 430px;
-  width: calc(100% - 32px);
-  background: var(--bg);
-  border-radius: 12px;
-  padding: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: calc(100% - 40px);
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  box-shadow: var(--shadow-lg);
   z-index: 200;
   display: flex;
-  gap: 8px;
+  gap: 12px;
 }
 
 .attach-menu-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 16px 20px;
   cursor: pointer;
-  border-radius: 10px;
-  transition: background 0.1s ease;
+  border-radius: var(--radius-md);
+  transition: background 0.2s ease;
 }
 
 .attach-menu-item:active {
@@ -499,8 +525,8 @@ onMounted(() => {
 }
 
 .attach-icon {
-  width: 44px;
-  height: 44px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -508,17 +534,18 @@ onMounted(() => {
 }
 
 .attach-icon.photo {
-  background: #E8F4FF;
+  background: var(--accent-light);
   color: var(--accent);
 }
 
 .attach-icon.audio {
-  background: #FFF3E0;
+  background: rgba(212, 165, 116, 0.15);
   color: var(--orange);
 }
 
 .attach-menu-item span {
   font-size: 13px;
+  font-weight: 500;
   color: var(--text-secondary);
 }
 </style>

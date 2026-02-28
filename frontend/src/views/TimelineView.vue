@@ -5,7 +5,7 @@
     </div>
 
     <div class="search-bar">
-      <input type="text" class="search-input" placeholder="搜索" v-model="searchQuery">
+      <input type="text" class="search-input" placeholder="搜索记录..." v-model="searchQuery">
     </div>
 
     <div class="date-filter">
@@ -22,7 +22,7 @@
         <button class="date-picker-btn" @click="showDatePicker = true">
           {{ formatDateRange.start || '开始日期' }}
         </button>
-        <span>—</span>
+        <span class="date-sep">→</span>
         <button class="date-picker-btn" @click="showDatePicker = true">
           {{ formatDateRange.end || '结束日期' }}
         </button>
@@ -42,7 +42,16 @@
         </div>
         
         <div v-if="Object.keys(groupedRecords).length === 0" class="empty-state">
-          暂无记录
+          <div class="empty-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M8 15s1.5 2 4 2 4-2 4-2"/>
+              <line x1="9" y1="9" x2="9.01" y2="9"/>
+              <line x1="15" y1="9" x2="15.01" y2="9"/>
+            </svg>
+          </div>
+          <div class="empty-text">暂无记录</div>
+          <div class="empty-hint">在"呦呦"中记录你今天见了谁</div>
         </div>
       </div>
 
@@ -172,50 +181,61 @@ onMounted(() => {
 
 <style scoped>
 .timeline-page {
-  background: var(--bg-secondary);
+  background: var(--bg);
+  min-height: 100vh;
 }
 
 .date-filter {
   background: var(--bg);
-  padding: 8px 16px 12px;
+  padding: 8px 20px 16px;
   display: flex;
   gap: 8px;
   align-items: center;
-  border-bottom: 0.5px solid var(--separator);
 }
 
 .date-filter-btn {
-  padding: 8px 14px;
+  padding: 10px 16px;
   background: var(--bg-secondary);
   border: none;
-  border-radius: 8px;
+  border-radius: 20px;
   font-size: 14px;
+  font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .date-filter-btn.active {
-  background: var(--accent-light);
-  color: var(--accent);
+  background: var(--accent);
+  color: white;
 }
 
 .date-filter-custom {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 14px;
   color: var(--text-secondary);
 }
 
+.date-sep {
+  color: var(--text-tertiary);
+}
+
 .date-picker-btn {
-  padding: 6px 10px;
+  padding: 8px 12px;
   background: var(--bg-secondary);
   border: none;
-  border-radius: 6px;
+  border-radius: 12px;
   font-size: 13px;
   color: var(--text);
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.date-picker-btn:active {
+  transform: scale(0.98);
 }
 
 .timeline-container {
@@ -229,25 +249,27 @@ onMounted(() => {
 
 .timeline-scroller {
   position: fixed;
-  right: 4px;
-  top: 180px;
-  width: 24px;
+  right: 8px;
+  top: 200px;
+  width: 28px;
   display: flex;
   flex-direction: column;
   align-items: center;
   z-index: 100;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 12px;
-  padding: 8px 0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  padding: 10px 0;
+  box-shadow: var(--shadow-md);
 }
 
 .scroller-item {
-  font-size: 9px;
+  font-size: 10px;
   color: var(--text-tertiary);
   cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 
 .scroller-item.active {
@@ -260,19 +282,37 @@ onMounted(() => {
   flex: 1;
   background: var(--separator);
   border-radius: 1px;
-  margin: 4px 0;
+  margin: 6px 0;
 }
 
 .date-section {
-  padding: 12px 16px 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-secondary);
+  padding: 20px 20px 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 .empty-state {
-  padding: 40px;
+  padding: 60px 40px;
   text-align: center;
+}
+
+.empty-icon {
+  color: var(--text-tertiary);
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.empty-text {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.empty-hint {
+  font-size: 14px;
   color: var(--text-tertiary);
 }
 </style>

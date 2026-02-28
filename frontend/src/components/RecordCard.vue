@@ -1,5 +1,5 @@
 <template>
-  <div class="record-card" @click="$emit('click')">
+  <div class="record-card fade-in" @click="$emit('click')">
     <div class="record-header">
       <div class="record-person-info">
         <span class="record-person">{{ record.personName }}</span>
@@ -48,33 +48,37 @@ function formatTime(timestamp) {
 
 <style scoped>
 .record-card {
-  background: var(--bg);
-  margin-bottom: 1px;
-  padding: 14px 16px;
+  background: var(--card);
+  margin: 0 16px 12px;
+  padding: 18px 20px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background 0.1s ease;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .record-card:active {
-  background: var(--bg-secondary);
+  transform: scale(0.98);
+  box-shadow: var(--shadow-md);
 }
 
 .record-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
 
 .record-person-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .record-person {
   font-size: 17px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .record-company {
@@ -83,41 +87,48 @@ function formatTime(timestamp) {
 }
 
 .record-time {
-  font-size: 15px;
-  color: var(--text-secondary);
+  font-size: 14px;
+  color: var(--text-tertiary);
   flex-shrink: 0;
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border-radius: 20px;
 }
 
 .record-summary {
   font-size: 15px;
   color: var(--text-secondary);
-  margin-bottom: 10px;
+  margin-bottom: 14px;
+  line-height: 1.5;
 }
 
 .record-structured {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .struct-row {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 12px;
 }
 
 .struct-label {
   font-size: 13px;
   color: var(--text-tertiary);
   min-width: 48px;
+  font-weight: 500;
 }
 
 .struct-value {
   font-size: 15px;
   color: var(--text);
+  line-height: 1.4;
 }
 
 .struct-value.todo {
   color: var(--accent);
+  font-weight: 500;
 }
 </style>
