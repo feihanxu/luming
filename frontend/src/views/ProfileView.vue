@@ -32,25 +32,47 @@
 
     <div class="todo-section">
       <div class="todo-header">
-        <span class="todo-title">待办事项</span>
-        <span class="todo-count">{{ pendingTodos.length }}</span>
+        <div class="todo-header-left">
+          <span class="todo-title">待办事项</span>
+          <span class="todo-count">{{ pendingTodos.length }}</span>
+        </div>
+        <button class="todo-add-btn" @click="showAddTodo = true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
       </div>
       <div v-if="pendingTodos.length > 0">
         <div 
           v-for="todo in pendingTodos" 
           :key="todo.id"
           class="todo-item"
-          @click="toggleTodo(todo.id)"
         >
-          <div class="todo-checkbox" :class="{ checked: todo.completed }">
-            {{ todo.completed ? '✓' : '' }}
+          <div class="todo-checkbox" :class="{ checked: todo.completed }" @click="toggleTodo(todo.id)">
+            <svg v-if="todo.completed" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
           </div>
-          <div class="todo-content">
+          <div class="todo-content" @click="editTodoItem(todo)">
             <div class="todo-text" :class="{ done: todo.completed }">
               {{ todo.content }}
             </div>
-            <div class="todo-meta">来自 {{ formatDate(todo.recordDate) }} 记录</div>
+            <div class="todo-meta">
+              <span v-if="todo.dueDate" class="todo-due" :class="{ overdue: isOverdue(todo.dueDate) }">
+                {{ formatDueDate(todo.dueDate) }}
+              </span>
+              <span v-if="todo.personId" class="todo-person" @click.stop="goToPerson(todo.personId)">
+                {{ getPersonName(todo.personId) }}
+              </span>
+            </div>
           </div>
+          <button class="todo-delete" @click="deleteTodoItem(todo)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
       </div>
       <div v-else class="todo-empty">
@@ -72,6 +94,39 @@
         <span class="menu-arrow">›</span>
       </div>
     </div>
+
+    <div v-if="showAddTodo" class="modal-overlay" @click="showAddTodo = false">
+      <div class="modal-sheet" @click.stop>
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <span class="modal-title">{{ editingTodo ? '编辑待办' : '新增待办' }}</span>
+          <button class="modal-close" @click="cancelTodoEdit">取消</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">内容 *</label>
+            <input type="text" class="form-input" v-model="todoForm.content" placeholder="待办内容">
+          </div>
+          <div class="form-group">
+            <label class="form-label">截止日期</label>
+            <input type="date" class="form-input" v-model="todoForm.dueDate">
+          </div>
+          <div class="form-group">
+            <label class="form-label">关联人脉</label>
+            <select class="form-input" v-model="todoForm.personId">
+              <option :value="null">无</option>
+              <option v-for="person in personStore.persons" :key="person.id" :value="person.id">
+                {{ person.name }}
+              </option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button v-if="editingTodo" class="btn btn-danger" @click="deleteTodoConfirm">删除</button>
+            <button class="btn btn-primary" :class="{ 'btn-full': !editingTodo }" @click="saveTodo">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -88,6 +143,13 @@ const personStore = usePersonStore()
 const userName = ref('用户')
 const showPreferences = ref(false)
 const showHelp = ref(false)
+const showAddTodo = ref(false)
+const editingTodo = ref(null)
+const todoForm = ref({
+  content: '',
+  dueDate: '',
+  personId: null
+})
 
 const userInitial = computed(() => userName.value.charAt(0))
 
@@ -105,6 +167,94 @@ function goToSettings() {
 
 async function toggleTodo(id) {
   await recordStore.toggleTodo(id)
+}
+
+function editTodoItem(todo) {
+  editingTodo.value = todo
+  todoForm.value = {
+    content: todo.content,
+    dueDate: todo.dueDate ? todo.dueDate.split('T')[0] : '',
+    personId: todo.personId
+  }
+  showAddTodo.value = true
+}
+
+function cancelTodoEdit() {
+  showAddTodo.value = false
+  editingTodo.value = null
+  todoForm.value = { content: '', dueDate: '', personId: null }
+}
+
+async function saveTodo() {
+  if (!todoForm.value.content.trim()) {
+    alert('请输入待办内容')
+    return
+  }
+  
+  const data = {
+    content: todoForm.value.content,
+    dueDate: todoForm.value.dueDate ? new Date(todoForm.value.dueDate).toISOString() : null,
+    personId: todoForm.value.personId
+  }
+  
+  if (editingTodo.value) {
+    await recordStore.updateTodo(editingTodo.value.id, data)
+  } else {
+    await recordStore.createTodo(data)
+  }
+  
+  cancelTodoEdit()
+}
+
+async function deleteTodoItem(todo) {
+  editingTodo.value = todo
+  todoForm.value = {
+    content: todo.content,
+    dueDate: todo.dueDate ? todo.dueDate.split('T')[0] : '',
+    personId: todo.personId
+  }
+  showAddTodo.value = true
+}
+
+async function deleteTodoConfirm() {
+  if (!editingTodo.value) return
+  if (!confirm('确定要删除这个待办吗？')) return
+  
+  await recordStore.deleteTodo(editingTodo.value.id)
+  cancelTodoEdit()
+}
+
+function isOverdue(dueDate) {
+  if (!dueDate) return false
+  return new Date(dueDate) < new Date()
+}
+
+function formatDueDate(dueDate) {
+  if (!dueDate) return ''
+  const date = new Date(dueDate)
+  const today = new Date()
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  
+  if (date.toDateString() === today.toDateString()) return '今天'
+  if (date.toDateString() === tomorrow.toDateString()) return '明天'
+  
+  const diff = Math.ceil((date - today) / (1000 * 60 * 60 * 24))
+  if (diff < 0) return `已过期 ${Math.abs(diff)} 天`
+  if (diff <= 7) return `${diff} 天后`
+  
+  return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
+}
+
+function getPersonName(personId) {
+  const person = personStore.persons.find(p => p.id === personId)
+  return person?.name || ''
+}
+
+function goToPerson(personId) {
+  if (personId) {
+    router.push(`/person/${personId}`)
+  }
 }
 
 function formatDate(dateStr) {
@@ -209,6 +359,30 @@ onMounted(() => {
   border-bottom: 0.5px solid var(--separator);
 }
 
+.todo-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.todo-add-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.todo-add-btn:active {
+  transform: scale(0.9);
+}
+
 .todo-title {
   font-size: 15px;
   font-weight: 500;
@@ -227,7 +401,6 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  cursor: pointer;
 }
 
 .todo-item:active {
@@ -247,17 +420,19 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .todo-checkbox.checked {
-  background: var(--green);
-  border-color: var(--green);
+  background: var(--accent);
+  border-color: var(--accent);
   color: white;
-  font-size: 12px;
 }
 
 .todo-content {
   flex: 1;
+  cursor: pointer;
 }
 
 .todo-text {
@@ -270,9 +445,47 @@ onMounted(() => {
 }
 
 .todo-meta {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.todo-due {
   font-size: 12px;
+  color: var(--text-secondary);
+  padding: 2px 6px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+}
+
+.todo-due.overdue {
+  color: #E74C3C;
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.todo-person {
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.todo-delete {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
   color: var(--text-tertiary);
-  margin-top: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.todo-delete:hover {
+  background: rgba(231, 76, 60, 0.1);
+  color: #E74C3C;
 }
 
 .todo-empty {
@@ -313,5 +526,117 @@ onMounted(() => {
   color: var(--text-tertiary);
   font-size: 14px;
   margin-left: 4px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.modal-sheet {
+  width: 100%;
+  max-width: 430px;
+  background: var(--card);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.modal-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--separator);
+  border-radius: 2px;
+  margin: 12px auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 20px 16px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.modal-close {
+  font-size: 16px;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.modal-body {
+  padding: 0 20px 30px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--bg-secondary);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  color: var(--text);
+  outline: none;
+  transition: box-shadow 0.2s ease;
+}
+
+.form-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.form-input:focus {
+  box-shadow: var(--shadow-md);
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.form-actions .btn {
+  flex: 1;
+}
+
+.btn-full {
+  width: 100%;
 }
 </style>

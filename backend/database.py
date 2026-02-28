@@ -28,6 +28,9 @@ class Person(Base):
     company = Column(String(200))
     industry = Column(String(100))
     avatar = Column(String(500))
+    phone = Column(String(50))
+    email = Column(String(100))
+    wechat = Column(String(100))
     tags = Column(JSON, default=list)
     preferences = Column(JSON, default=dict)
     last_contact = Column(DateTime)
@@ -35,8 +38,8 @@ class Person(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    records = relationship("Record", back_populates="person")
-    todos = relationship("Todo", back_populates="person")
+    records = relationship("Record", back_populates="person", cascade="all, delete-orphan")
+    todos = relationship("Todo", back_populates="person", cascade="all, delete-orphan")
 
 class Record(Base):
     __tablename__ = "records"
@@ -56,6 +59,7 @@ class Record(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     person = relationship("Person", back_populates="records")
+    todos = relationship("Todo", back_populates="record_rel", cascade="all, delete-orphan")
 
 class Todo(Base):
     __tablename__ = "todos"
@@ -71,6 +75,7 @@ class Todo(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     person = relationship("Person", back_populates="todos")
+    record_rel = relationship("Record", back_populates="todos")
 
 class ChatMessage(Base):
     __tablename__ = "chat_messages"

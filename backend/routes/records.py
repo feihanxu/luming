@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
 from database import get_db, Record, Person
-from schemas import RecordCreate, RecordResponse
+from schemas import RecordCreate, RecordUpdate, RecordResponse
 
 router = APIRouter()
 
@@ -39,6 +39,20 @@ def create_record(record: RecordCreate, db: Session = Depends(get_db)):
         if person:
             person.last_contact = datetime.utcnow()
             person.meeting_count = (person.meeting_count or 0) + 1
+    
+    db.commit()
+    db.refresh(db_record)
+    return db_record
+
+@router.put("/{record_id}", response_model=RecordResponse)
+def update_record(record_id: int, record: RecordUpdate, db: Session = Depends(get_db)):
+    db_record = db.query(Record).filter(Record.id == record_id).first()
+    if not db_record:
+        raise HTTPException(status_code=404, detail="Record not found")
+    
+    update_data = record.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_record, key, value)
     
     db.commit()
     db.refresh(db_record)

@@ -141,6 +141,25 @@ export const useRecordStore = defineStore('record', () => {
     return record
   }
 
+  async function updateRecord(id, data) {
+    const response = await fetch(`/api/records/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    const updated = await response.json()
+    const index = records.value.findIndex(r => r.id === id)
+    if (index !== -1) {
+      records.value[index] = { ...records.value[index], ...updated }
+    }
+    return updated
+  }
+
+  async function deleteRecord(id) {
+    await fetch(`/api/records/${id}`, { method: 'DELETE' })
+    records.value = records.value.filter(r => r.id !== id)
+  }
+
   async function fetchTodos() {
     try {
       const response = await fetch('/api/todos')
@@ -169,6 +188,53 @@ export const useRecordStore = defineStore('record', () => {
     }
   }
 
+  async function createTodo(data) {
+    try {
+      const response = await fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      const todo = await response.json()
+      todos.value.push(todo)
+      return todo
+    } catch (e) {
+      const newTodo = {
+        id: Date.now(),
+        ...data,
+        completed: false,
+        createdAt: new Date().toISOString()
+      }
+      todos.value.push(newTodo)
+      return newTodo
+    }
+  }
+
+  async function updateTodo(id, data) {
+    const todo = todos.value.find(t => t.id === id)
+    if (todo) {
+      Object.assign(todo, data)
+      try {
+        await fetch(`/api/todos/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+      } catch (e) {
+        console.log('Todo updated locally')
+      }
+    }
+  }
+
+  async function deleteTodo(id) {
+    todos.value = todos.value.filter(t => t.id !== id)
+    try {
+      await fetch(`/api/todos/${id}`, { method: 'DELETE' })
+    } catch (e) {
+      console.log('Todo deleted locally')
+    }
+  }
+
   return {
     records,
     todos,
@@ -177,7 +243,12 @@ export const useRecordStore = defineStore('record', () => {
     completedTodos,
     fetchRecords,
     createRecord,
+    updateRecord,
+    deleteRecord,
     fetchTodos,
-    toggleTodo
+    toggleTodo,
+    createTodo,
+    updateTodo,
+    deleteTodo
   }
 })

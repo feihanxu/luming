@@ -48,6 +48,13 @@ class RecordBase(BaseModel):
 class RecordCreate(RecordBase):
     pass
 
+class RecordUpdate(BaseModel):
+    summary: Optional[str] = None
+    location: Optional[str] = None
+    topic: Optional[str] = None
+    todo: Optional[str] = None
+    note: Optional[str] = None
+
 class RecordResponse(RecordBase):
     id: int
     timestamp: datetime
