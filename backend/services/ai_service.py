@@ -9,7 +9,7 @@ class AIService:
     def __init__(self):
         self.api_key = os.getenv("GLM_API_KEY", "")
         self.api_url = os.getenv("API_URL", "https://open.bigmodel.cn/api/paas/v4/chat/completions")
-        self.model = os.getenv("AI_MODEL", "glm-4")
+        self.model = os.getenv("AI_MODEL", "glm-5")
         self.conversation_state: Dict[str, Any] = {}
     
     def get_config(self, db=None):
