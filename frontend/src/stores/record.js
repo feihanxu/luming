@@ -121,6 +121,7 @@ export const useRecordStore = defineStore('record', () => {
     if (endDate) params.append('end', endDate)
     try {
       const response = await fetch(`/api/records?${params}`)
+      if (!response.ok) throw new Error('Failed to fetch records')
       const data = await response.json()
       if (data && data.length > 0) {
         records.value = data
@@ -131,38 +132,70 @@ export const useRecordStore = defineStore('record', () => {
   }
 
   async function createRecord(data) {
-    const response = await fetch('/api/records', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    })
-    const record = await response.json()
-    records.value.unshift(record)
-    return record
+    try {
+      const response = await fetch('/api/records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (!response.ok) throw new Error('Failed to create record')
+      const record = await response.json()
+      records.value.unshift(record)
+      return record
+    } catch (e) {
+      const newRecord = {
+        id: Date.now(),
+        ...data,
+        timestamp: new Date().toISOString()
+      }
+      records.value.unshift(newRecord)
+      return newRecord
+    }
   }
 
   async function updateRecord(id, data) {
-    const response = await fetch(`/api/records/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    })
-    const updated = await response.json()
     const index = records.value.findIndex(r => r.id === id)
-    if (index !== -1) {
-      records.value[index] = { ...records.value[index], ...updated }
+    const originalRecord = index !== -1 ? { ...records.value[index] } : null
+    
+    try {
+      const response = await fetch(`/api/records/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (!response.ok) throw new Error('Failed to update record')
+      const updated = await response.json()
+      if (index !== -1) {
+        records.value[index] = { ...records.value[index], ...updated }
+      }
+      return updated
+    } catch (e) {
+      if (index !== -1) {
+        records.value[index] = { ...records.value[index], ...data }
+        return records.value[index]
+      }
+      throw e
     }
-    return updated
   }
 
   async function deleteRecord(id) {
-    await fetch(`/api/records/${id}`, { method: 'DELETE' })
-    records.value = records.value.filter(r => r.id !== id)
+    const index = records.value.findIndex(r => r.id === id)
+    const deletedRecord = index !== -1 ? records.value[index] : null
+    
+    try {
+      const response = await fetch(`/api/records/${id}`, { method: 'DELETE' })
+      if (!response.ok) throw new Error('Failed to delete record')
+      records.value = records.value.filter(r => r.id !== id)
+    } catch (e) {
+      console.log('Record deleted locally')
+      records.value = records.value.filter(r => r.id !== id)
+    }
   }
 
   async function fetchTodos() {
     try {
       const response = await fetch('/api/todos')
+      if (!response.ok) throw new Error('Failed to fetch todos')
       const data = await response.json()
       if (data && data.length > 0) {
         todos.value = data
@@ -174,17 +207,23 @@ export const useRecordStore = defineStore('record', () => {
 
   async function toggleTodo(id) {
     const todo = todos.value.find(t => t.id === id)
-    if (todo) {
-      todo.completed = !todo.completed
-      try {
-        await fetch(`/api/todos/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ completed: todo.completed })
-        })
-      } catch (e) {
-        console.log('Todo updated locally')
+    if (!todo) return
+    
+    const previousState = todo.completed
+    todo.completed = !todo.completed
+    
+    try {
+      const response = await fetch(`/api/todos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: todo.completed })
+      })
+      if (!response.ok) {
+        todo.completed = previousState
+        throw new Error('Failed to toggle todo')
       }
+    } catch (e) {
+      console.log('Todo updated locally')
     }
   }
 
@@ -195,6 +234,7 @@ export const useRecordStore = defineStore('record', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
+      if (!response.ok) throw new Error('Failed to create todo')
       const todo = await response.json()
       todos.value.push(todo)
       return todo
@@ -212,24 +252,37 @@ export const useRecordStore = defineStore('record', () => {
 
   async function updateTodo(id, data) {
     const todo = todos.value.find(t => t.id === id)
-    if (todo) {
-      Object.assign(todo, data)
-      try {
-        await fetch(`/api/todos/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        })
-      } catch (e) {
-        console.log('Todo updated locally')
+    if (!todo) return
+    
+    const previousData = { ...todo }
+    Object.assign(todo, data)
+    
+    try {
+      const response = await fetch(`/api/todos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (!response.ok) {
+        Object.assign(todo, previousData)
+        throw new Error('Failed to update todo')
       }
+    } catch (e) {
+      console.log('Todo updated locally')
     }
   }
 
   async function deleteTodo(id) {
+    const index = todos.value.findIndex(t => t.id === id)
+    const deletedTodo = index !== -1 ? todos.value[index] : null
     todos.value = todos.value.filter(t => t.id !== id)
+    
     try {
-      await fetch(`/api/todos/${id}`, { method: 'DELETE' })
+      const response = await fetch(`/api/todos/${id}`, { method: 'DELETE' })
+      if (!response.ok && deletedTodo) {
+        todos.value.splice(index, 0, deletedTodo)
+        throw new Error('Failed to delete todo')
+      }
     } catch (e) {
       console.log('Todo deleted locally')
     }

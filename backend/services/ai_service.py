@@ -1,16 +1,17 @@
 import os
+import time
 import httpx
 import json
 from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 from database import Person, Record, Todo
 
+
 class AIService:
     def __init__(self):
         self.api_key = os.getenv("GLM_API_KEY", "")
         self.api_url = os.getenv("API_URL", "https://open.bigmodel.cn/api/paas/v4/chat/completions")
         self.model = os.getenv("AI_MODEL", "glm-5")
-        self.conversation_state: Dict[str, Any] = {}
     
     def get_config(self, db=None):
         return {
@@ -63,6 +64,10 @@ class AIService:
                         return str(data)
                 else:
                     return f"AI 调用失败: {response.status_code}"
+            except httpx.TimeoutException:
+                return "AI 调用超时，请稍后重试"
+            except httpx.RequestError as e:
+                return f"网络请求出错: {str(e)}"
             except Exception as e:
                 return f"AI 调用出错: {str(e)}"
     
@@ -127,15 +132,21 @@ class AIService:
                     result["draft"] = data["data"]
                     
                     if result["action"] == "preview":
-                        result["draft"]["id"] = f"draft_{int(__import__('time').time())}"
+                        result["draft"]["id"] = f"draft_{int(time.time())}"
         
+        except json.JSONDecodeError as e:
+            print(f"JSON 解析错误: {e}")
         except Exception as e:
-            pass
+            print(f"处理 AI 响应时出错: {e}")
         
         return result
     
     async def confirm_save(self, draft: dict, db: Session) -> dict:
         result = {"success": False, "record": None, "message": ""}
+        
+        if not draft:
+            result["message"] = "草稿数据为空"
+            return result
         
         try:
             person_name = draft.get("person_name")
@@ -196,6 +207,7 @@ class AIService:
             result["message"] = "保存成功啦！"
             
         except Exception as e:
+            db.rollback()
             result["message"] = f"保存失败: {str(e)}"
         
         return result
