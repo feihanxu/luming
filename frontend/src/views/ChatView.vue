@@ -23,10 +23,52 @@
           </div>
         </template>
         
+        <div v-if="message.draft && message.action === 'preview'" class="draft-card" @click="toggleDraft(index)">
+          <div class="draft-header">
+            <div class="draft-avatar">{{ message.draft.person_name?.charAt(0) }}</div>
+            <div class="draft-info">
+              <div class="draft-name">{{ message.draft.person_name }}</div>
+              <div class="draft-summary">{{ message.draft.summary || '点击查看详情' }}</div>
+            </div>
+            <div class="draft-expand" :class="{ expanded: expandedDrafts.includes(index) }">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </div>
+          
+          <div v-if="expandedDrafts.includes(index)" class="draft-detail">
+            <div class="draft-detail-content">
+              <div v-if="message.draft.location" class="draft-row">
+                <span class="draft-label">地点</span>
+                <span class="draft-value">{{ message.draft.location }}</span>
+              </div>
+              <div v-if="message.draft.topic" class="draft-row">
+                <span class="draft-label">事项</span>
+                <span class="draft-value">{{ message.draft.topic }}</span>
+              </div>
+              <div v-if="message.draft.todo" class="draft-row">
+                <span class="draft-label">待办</span>
+                <span class="draft-value todo">{{ message.draft.todo }}</span>
+              </div>
+              <div v-if="message.draft.note" class="draft-row">
+                <span class="draft-label">备注</span>
+                <span class="draft-value">{{ message.draft.note }}</span>
+              </div>
+            </div>
+            
+            <div class="draft-actions">
+              <button class="draft-btn cancel" @click.stop="cancelDraft(message.draft)">取消</button>
+              <button class="draft-btn edit" @click.stop="editDraft(message.draft)">编辑</button>
+              <button class="draft-btn confirm" @click.stop="confirmDraft(message.draft)">确认保存</button>
+            </div>
+          </div>
+        </div>
+
         <div v-if="message.record" class="chat-record-card">
           <div class="chat-record-header">
             <span class="chat-record-person">{{ message.record.personName }}</span>
-            <span class="chat-record-time">刚刚</span>
+            <span class="chat-record-time">已保存</span>
           </div>
           <div class="chat-record-content">
             <div v-if="message.record.location" class="chat-record-row">
@@ -41,17 +83,6 @@
               <span class="chat-record-label">待办</span>
               <span class="chat-record-value todo">{{ message.record.todo }}</span>
             </div>
-          </div>
-        </div>
-
-        <div v-if="message.avatarUpdate" class="chat-avatar-preview">
-          <div class="chat-avatar-new">
-            <span>{{ message.avatarUpdate.name?.charAt(0) }}</span>
-            <div class="chat-avatar-badge">✓</div>
-          </div>
-          <div class="chat-avatar-info">
-            <div class="chat-avatar-name">{{ message.avatarUpdate.name }}</div>
-            <div class="chat-avatar-desc">头像已更新</div>
           </div>
         </div>
       </div>
@@ -125,6 +156,39 @@
       style="display: none"
       @change="handleFileSelect"
     />
+
+    <div v-if="showEditModal" class="modal-overlay" @click="showEditModal = false">
+      <div class="modal-sheet" @click.stop>
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <span class="modal-title">编辑记录</span>
+          <button class="modal-close" @click="showEditModal = false">取消</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">姓名</label>
+            <input type="text" class="form-input" v-model="editForm.person_name" placeholder="姓名">
+          </div>
+          <div class="form-group">
+            <label class="form-label">地点</label>
+            <input type="text" class="form-input" v-model="editForm.location" placeholder="见面地点">
+          </div>
+          <div class="form-group">
+            <label class="form-label">事项</label>
+            <input type="text" class="form-input" v-model="editForm.topic" placeholder="讨论事项">
+          </div>
+          <div class="form-group">
+            <label class="form-label">待办</label>
+            <input type="text" class="form-input" v-model="editForm.todo" placeholder="后续待办">
+          </div>
+          <div class="form-group">
+            <label class="form-label">备注</label>
+            <textarea class="form-textarea" v-model="editForm.note" placeholder="其他备注" rows="2"></textarea>
+          </div>
+          <button class="btn btn-primary btn-full" @click="saveEdit">保存</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -139,14 +203,17 @@ const fileInput = ref(null)
 const inputText = ref('')
 const showAttachMenu = ref(false)
 const fileType = ref('image')
+const expandedDrafts = ref([])
+const showEditModal = ref(false)
+const editForm = ref({})
 
 const messages = computed(() => chatStore.messages)
 const isLoading = computed(() => chatStore.isLoading)
 
 const suggestions = [
   '今天见了谁？',
-  '发照片记录头像',
-  '好久没联系谁了'
+  '和老朋友聚餐',
+  '聊了个合作项目'
 ]
 
 const fileAccept = computed(() => 
@@ -184,6 +251,35 @@ async function handleFileSelect(event) {
   event.target.value = ''
 }
 
+function toggleDraft(index) {
+  const idx = expandedDrafts.value.indexOf(index)
+  if (idx === -1) {
+    expandedDrafts.value.push(index)
+  } else {
+    expandedDrafts.value.splice(idx, 1)
+  }
+}
+
+async function confirmDraft(draft) {
+  await chatStore.confirmDraft(draft)
+  scrollToBottom()
+}
+
+function cancelDraft(draft) {
+  chatStore.cancelDraft()
+}
+
+function editDraft(draft) {
+  editForm.value = { ...draft }
+  showEditModal.value = true
+}
+
+async function saveEdit() {
+  showEditModal.value = false
+  await chatStore.confirmDraft(editForm.value)
+  scrollToBottom()
+}
+
 function scrollToBottom() {
   nextTick(() => {
     if (messagesContainer.value) {
@@ -196,13 +292,13 @@ onMounted(() => {
   if (messages.value.length === 0) {
     chatStore.messages.push({
       role: 'assistant',
-      content: '你好呀！我是呦呦，你的人脉小助手。',
+      content: '你好呀！我是呦呦，你的人脉小助手~',
       type: 'text',
       timestamp: new Date().toISOString()
     })
     chatStore.messages.push({
       role: 'assistant',
-      content: '你可以告诉我今天见了谁、聊了什么，也可以发照片让我帮你记录人物头像。',
+      content: '告诉我你今天见了谁、聊了什么，我来帮你记录！',
       type: 'text',
       timestamp: new Date().toISOString()
     })
@@ -256,22 +352,137 @@ onMounted(() => {
   color: var(--text-secondary);
 }
 
-.chat-image-container {
+.draft-card {
+  background: var(--bg);
   border-radius: 14px;
+  margin-top: 10px;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+.draft-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.draft-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+}
+
+.draft-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.draft-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.draft-summary {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.draft-expand {
+  color: var(--text-tertiary);
+  transition: transform 0.2s ease;
+}
+
+.draft-expand.expanded {
+  transform: rotate(180deg);
+}
+
+.draft-detail {
+  border-top: 1px solid var(--separator);
+  padding: 14px 16px;
+}
+
+.draft-detail-content {
+  margin-bottom: 14px;
+}
+
+.draft-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   margin-bottom: 8px;
 }
 
-.chat-image-container img {
-  max-width: 200px;
-  max-height: 150px;
-  object-fit: cover;
+.draft-row:last-child {
+  margin-bottom: 0;
 }
 
-.chat-image-caption {
+.draft-label {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  min-width: 40px;
+  font-weight: 500;
+}
+
+.draft-value {
+  font-size: 15px;
+  color: var(--text);
+}
+
+.draft-value.todo {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.draft-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--separator);
+}
+
+.draft-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 20px;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.85);
-  margin-top: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.draft-btn.cancel {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.draft-btn.edit {
+  background: var(--bg-secondary);
+  color: var(--text);
+}
+
+.draft-btn.confirm {
+  background: var(--accent);
+  color: white;
+}
+
+.draft-btn:active {
+  transform: scale(0.98);
 }
 
 .chat-record-card {
@@ -299,9 +510,9 @@ onMounted(() => {
 
 .chat-record-time {
   font-size: 13px;
-  color: var(--text-tertiary);
+  color: var(--accent);
   padding: 4px 10px;
-  background: var(--bg-secondary);
+  background: var(--accent-light);
   border-radius: 20px;
 }
 
@@ -335,64 +546,6 @@ onMounted(() => {
 .chat-record-value.todo {
   color: var(--accent);
   font-weight: 500;
-}
-
-.chat-avatar-preview {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  max-width: 85%;
-  background: var(--bg);
-  border-radius: 14px;
-  padding: 14px 16px;
-  margin-top: 10px;
-  box-shadow: var(--shadow-sm);
-}
-
-.chat-avatar-new {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: var(--accent-gradient);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  font-weight: 600;
-  color: white;
-  position: relative;
-}
-
-.chat-avatar-badge {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 20px;
-  height: 20px;
-  background: var(--green);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  color: white;
-  border: 2px solid white;
-}
-
-.chat-avatar-info {
-  flex: 1;
-}
-
-.chat-avatar-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.chat-avatar-desc {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin-top: 3px;
 }
 
 .suggestions {
@@ -547,5 +700,120 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.modal-sheet {
+  width: 100%;
+  max-width: 430px;
+  background: var(--card);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.modal-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--separator);
+  border-radius: 2px;
+  margin: 12px auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 20px 16px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.modal-close {
+  font-size: 16px;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.modal-body {
+  padding: 0 20px 30px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--bg-secondary);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  color: var(--text);
+  outline: none;
+  transition: box-shadow 0.2s ease;
+}
+
+.form-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.form-input:focus {
+  box-shadow: var(--shadow-md);
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--bg-secondary);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  color: var(--text);
+  outline: none;
+  resize: none;
+  font-family: inherit;
+}
+
+.form-textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+.btn-full {
+  width: 100%;
 }
 </style>

@@ -12,7 +12,7 @@ router = APIRouter()
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-@router.post("/", response_model=ChatResponse)
+@router.post("/", response_model=dict)
 async def chat(request: ChatRequest, db: Session = Depends(get_db)):
     message = ChatMessage(
         role="user",
@@ -32,13 +32,15 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
     db.add(response_message)
     db.commit()
     
-    return ChatResponse(
-        response=result["response"],
-        record=result.get("record"),
-        avatar_update=result.get("avatar_update")
-    )
+    return result
 
-@router.post("/upload", response_model=ChatResponse)
+@router.post("/confirm", response_model=dict)
+async def confirm_record(draft: dict, db: Session = Depends(get_db)):
+    ai_service = AIService()
+    result = await ai_service.confirm_save(draft, db)
+    return result
+
+@router.post("/upload", response_model=dict)
 async def upload_file(
     file: UploadFile = File(...),
     description: Optional[str] = Form(None),
@@ -66,7 +68,7 @@ async def upload_file(
     elif file.content_type and file.content_type.startswith("audio/"):
         result = await ai_service.process_audio(file_path, description, db)
     else:
-        result = {"response": "不支持的文件类型"}
+        result = {"response": "不支持的文件类型", "action": "ask", "draft": None}
     
     response_message = ChatMessage(
         role="assistant",
@@ -75,8 +77,4 @@ async def upload_file(
     db.add(response_message)
     db.commit()
     
-    return ChatResponse(
-        response=result["response"],
-        record=result.get("record"),
-        avatar_update=result.get("avatar_update")
-    )
+    return result
