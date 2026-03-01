@@ -115,6 +115,7 @@ const themes = [
 ]
 
 const aiModels = [
+  { label: 'GLM-5', value: 'glm-5', placeholder: '智谱AI GLM-5', url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions' },
   { label: 'GLM-4', value: 'glm-4', placeholder: '智谱AI GLM-4', url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions' },
   { label: 'GPT-4o', value: 'gpt-4o', placeholder: 'OpenAI GPT-4o', url: 'https://api.openai.com/v1/chat/completions' },
   { label: 'Claude 3.5 Sonnet', value: 'claude-3.5-sonnet', placeholder: 'Anthropic Claude 3.5 Sonnet', url: 'https://api.anthropic.com/v1/messages' },
@@ -132,7 +133,7 @@ const speechServices = [
 ]
 
 const currentTheme = ref('light')
-const currentModel = ref('glm-4')
+const currentModel = ref('glm-5')
 const currentModelConfig = ref({})
 const currentSpeech = ref('xunfei')
 const apiKey = ref('')
@@ -182,10 +183,32 @@ function selectModel(model) {
   localStorage.setItem('luming-model-config', JSON.stringify(config))
 }
 
-function saveApiKey() {
-  localStorage.setItem('luming-api-key', apiKey.value)
-  localStorage.setItem('luming-api-url', currentModelConfig.value.url)
-  alert('API 设置已保存')
+async function saveApiKey() {
+  try {
+    const response = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: apiKey.value,
+        api_url: currentModelConfig.value?.url || apiUrl.value || 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+        model: currentModel.value
+      })
+    })
+    
+    if (response.ok) {
+      localStorage.setItem('luming-api-key', apiKey.value)
+      localStorage.setItem('luming-api-url', currentModelConfig.value?.url || apiUrl.value)
+      localStorage.setItem('luming-model', currentModel.value)
+      alert('API 设置已保存')
+    } else {
+      alert('保存失败，请重试')
+    }
+  } catch (e) {
+    localStorage.setItem('luming-api-key', apiKey.value)
+    localStorage.setItem('luming-api-url', currentModelConfig.value?.url || apiUrl.value)
+    localStorage.setItem('luming-model', currentModel.value)
+    alert('API 设置已保存到本地')
+  }
 }
 
 function exportData() {
