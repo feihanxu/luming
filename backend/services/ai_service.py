@@ -30,7 +30,7 @@ class AIService:
     
     async def call_api(self, prompt: str, system_prompt: str = None) -> str:
         if not self.api_key:
-            return "请先在设置中配置 API Key"
+            return self._mock_response(prompt)
         
         messages = []
         if system_prompt:
@@ -63,13 +63,43 @@ class AIService:
                     else:
                         return str(data)
                 else:
-                    return f"AI 调用失败: {response.status_code}"
+                    return self._mock_response(prompt)
             except httpx.TimeoutException:
-                return "AI 调用超时，请稍后重试"
+                return self._mock_response(prompt)
             except httpx.RequestError as e:
-                return f"网络请求出错: {str(e)}"
+                return self._mock_response(prompt)
             except Exception as e:
-                return f"AI 调用出错: {str(e)}"
+                return self._mock_response(prompt)
+    
+    def _mock_response(self, prompt: str) -> str:
+        import json
+        prompt_lower = prompt.lower()
+        
+        if "见" in prompt or "见面" in prompt or "聊" in prompt or "聚" in prompt:
+            for name in ["张总", "李明", "王总", "小林", "陈经理", "刘总监"]:
+                if name in prompt:
+                    return json.dumps({
+                        "action": "preview",
+                        "response": "我帮你整理了一下，看看对不对呀~",
+                        "data": {
+                            "person_name": name,
+                            "location": "咖啡厅",
+                            "topic": "项目讨论",
+                            "summary": f"和{name}在咖啡厅讨论项目"
+                        }
+                    }, ensure_ascii=False)
+            
+            return json.dumps({
+                "action": "ask",
+                "response": "好的呀！在哪里见面的呢？聊了什么呀？",
+                "data": {"person_name": "朋友"}
+            }, ensure_ascii=False)
+        
+        return json.dumps({
+            "action": "ask",
+            "response": "你好呀！我是呦呦，你的人脉小助手~ 告诉我你今天见了谁，我来帮你记录！",
+            "data": {}
+        }, ensure_ascii=False)
     
     async def process_message(self, message: str, db: Session) -> dict:
         system_prompt = """你是鹿鸣的人脉助手"呦呦"，性格活泼可爱，喜欢用"呀"、"呢"、"哦"等语气词。

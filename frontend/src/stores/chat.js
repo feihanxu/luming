@@ -21,11 +21,16 @@ export const useChatStore = defineStore('chat', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: content, type })
       })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
       const data = await response.json()
       
       const aiMessage = {
         role: 'assistant',
-        content: data.response,
+        content: data.response || '抱歉，我暂时无法回应，请稍后再试~',
         type: 'text',
         timestamp: new Date().toISOString(),
         action: data.action,
@@ -39,6 +44,14 @@ export const useChatStore = defineStore('chat', () => {
       }
       
       return data
+    } catch (error) {
+      messages.value.push({
+        role: 'assistant',
+        content: '网络连接失败，请检查网络后重试~',
+        type: 'text',
+        timestamp: new Date().toISOString()
+      })
+      throw error
     } finally {
       isLoading.value = false
     }
@@ -52,6 +65,11 @@ export const useChatStore = defineStore('chat', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(draft)
       })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
       const data = await response.json()
       
       if (data.success) {
@@ -66,13 +84,21 @@ export const useChatStore = defineStore('chat', () => {
       } else {
         messages.value.push({
           role: 'assistant',
-          content: data.message || '保存失败，请重试',
+          content: data.message || '保存失败，请重试~',
           type: 'text',
           timestamp: new Date().toISOString()
         })
       }
       
       return data
+    } catch (error) {
+      messages.value.push({
+        role: 'assistant',
+        content: '保存失败，请检查网络后重试~',
+        type: 'text',
+        timestamp: new Date().toISOString()
+      })
+      throw error
     } finally {
       isLoading.value = false
     }
@@ -101,11 +127,16 @@ export const useChatStore = defineStore('chat', () => {
         method: 'POST',
         body: formData
       })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
       const data = await response.json()
       
       messages.value.push({
         role: 'assistant',
-        content: data.response,
+        content: data.response || '收到文件啦！',
         type: 'text',
         timestamp: new Date().toISOString(),
         action: data.action,
@@ -113,6 +144,14 @@ export const useChatStore = defineStore('chat', () => {
       })
       
       return data
+    } catch (error) {
+      messages.value.push({
+        role: 'assistant',
+        content: '文件上传失败，请重试~',
+        type: 'text',
+        timestamp: new Date().toISOString()
+      })
+      throw error
     } finally {
       isLoading.value = false
     }

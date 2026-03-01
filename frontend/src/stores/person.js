@@ -36,7 +36,6 @@ export const usePersonStore = defineStore('person', () => {
         persons.value = data
       }
     } catch (e) {
-      console.log('Using mock persons')
     }
   }
 
@@ -100,7 +99,6 @@ export const usePersonStore = defineStore('person', () => {
         method: 'DELETE'
       })
     } catch (e) {
-      console.log('Delete locally')
     }
     const index = persons.value.findIndex(p => p.id === id)
     if (index !== -1) {

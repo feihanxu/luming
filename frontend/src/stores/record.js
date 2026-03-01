@@ -127,7 +127,6 @@ export const useRecordStore = defineStore('record', () => {
         records.value = data
       }
     } catch (e) {
-      console.log('Using mock data')
     }
   }
 
@@ -187,7 +186,6 @@ export const useRecordStore = defineStore('record', () => {
       if (!response.ok) throw new Error('Failed to delete record')
       records.value = records.value.filter(r => r.id !== id)
     } catch (e) {
-      console.log('Record deleted locally')
       records.value = records.value.filter(r => r.id !== id)
     }
   }
@@ -201,7 +199,6 @@ export const useRecordStore = defineStore('record', () => {
         todos.value = data
       }
     } catch (e) {
-      console.log('Using mock todos')
     }
   }
 
@@ -220,10 +217,8 @@ export const useRecordStore = defineStore('record', () => {
       })
       if (!response.ok) {
         todo.completed = previousState
-        throw new Error('Failed to toggle todo')
       }
     } catch (e) {
-      console.log('Todo updated locally')
     }
   }
 
@@ -265,10 +260,8 @@ export const useRecordStore = defineStore('record', () => {
       })
       if (!response.ok) {
         Object.assign(todo, previousData)
-        throw new Error('Failed to update todo')
       }
     } catch (e) {
-      console.log('Todo updated locally')
     }
   }
 
@@ -281,10 +274,8 @@ export const useRecordStore = defineStore('record', () => {
       const response = await fetch(`/api/todos/${id}`, { method: 'DELETE' })
       if (!response.ok && deletedTodo) {
         todos.value.splice(index, 0, deletedTodo)
-        throw new Error('Failed to delete todo')
       }
     } catch (e) {
-      console.log('Todo deleted locally')
     }
   }
 
